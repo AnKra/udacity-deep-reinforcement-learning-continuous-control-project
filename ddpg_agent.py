@@ -13,12 +13,12 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent():
     """Interacts with and learns from the environment."""
-    
-    def __init__(self, state_size, action_size, seed, buffer_size=int(1e6), batch_size=128, 
-                 gamma=0.99, tau=1e-3, lr_actor=6e-4, lr_critic=6e-4, weight_decay=0, 
+
+    def __init__(self, state_size, action_size, seed, batch_size, buffer_size=int(1e6), 
+                 gamma=0.99, tau=1e-3, lr_actor=6e-4, lr_critic=6e-4, weight_decay=0,
                  update_every=20, n_update_networks=10):
         """Initialize an Agent object.
-        
+
         Params
         ======
             state_size (int): dimension of each state
@@ -28,7 +28,7 @@ class Agent():
             batch_size (int): minibatch size
             gamma (float): discount factor
             tau (float): for soft update of target parameters
-            lr_actor (float): learning rate of the actor 
+            lr_actor (float): learning rate of the actor
             lr_critic (float): learning rate of the critic
             weight_decay (float): L2 weight decay
         """
@@ -54,11 +54,11 @@ class Agent():
 
         # Replay memory
         self.memory = ReplayBuffer(action_size, buffer_size, batch_size, seed)
-        
+
         self.update_every = update_every
         self.n_update_networks = n_update_networks
         self.step_count = 0
-    
+
     def step(self, states, actions, rewards, next_states, dones):
         """Save experience in replay memory, and use random sample from buffer to learn."""
         # Save experience / reward
@@ -94,7 +94,7 @@ class Agent():
             critic_target(state, action) -> Q-value
         Params
         ======
-            experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples 
+            experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples
             gamma (float): discount factor
         """
         states, actions, rewards, next_states, dones = experiences
@@ -125,7 +125,7 @@ class Agent():
 
         # ----------------------- update target networks ----------------------- #
         self.soft_update(self.critic_local, self.critic_target, tau)
-        self.soft_update(self.actor_local, self.actor_target, tau)                     
+        self.soft_update(self.actor_local, self.actor_target, tau)
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
@@ -134,7 +134,7 @@ class Agent():
         ======
             local_model: PyTorch model (weights will be copied from)
             target_model: PyTorch model (weights will be copied to)
-            tau (float): interpolation parameter 
+            tau (float): interpolation parameter
         """
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
@@ -176,13 +176,13 @@ class ReplayBuffer:
         self.batch_size = batch_size
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
         self.seed = random.seed(seed)
-    
+
     def add(self, states, actions, rewards, next_states, dones):
         """Add a new experience to memory."""
         #for state, action, reward, next_state, done in zip(states, actions, rewards, next_states, dones):
         e = self.experience(states, actions, rewards, next_states, dones)
         self.memory.append(e)
-    
+
     def sample(self):
         """Randomly sample a batch of experiences from memory."""
         experiences = random.sample(self.memory, k=self.batch_size)

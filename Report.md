@@ -109,3 +109,67 @@ Two characteristics of DDPG are:
   <img src="images/policy-gradient-summary.png" width="60%" alt="" title="Summary of Policy Gradient Algorithms" />
   <figcaption>Summary of Policy Gradient Algorithms. Source: https://hadovanhasselt.files.wordpress.com/2016/01/pg1.pdf</figcaption>
 </figure>
+
+# Project 2 - Continuous Control
+
+## Learning Algorithm
+The learning algorithm is based on the [DDPG Paper](https://arxiv.org/pdf/1509.02971.pdf). I started with 1 agent (using version 1 of the environment). After having gained some experience on how to tune the parameters, I switched to 20 agents (using version 2 of the environment).
+
+In every step the Agent class takes 20 states, actions, rewards, next states and dones as input (one per agent) and outputs 20 actions. It represents 20 agents.
+
+Each agent inserts its experience into a replay buffer. The buffer is shared by all agents. The agents sample batches of 256 experiences from the buffer. This relatively large batch size results in a smoother learning curve.
+
+The actor and critic networks are updated 10 times in a row after every 20 timesteps to make the agent stable. When training the critic network I use gradient clipping. The update is performed by soft update with tau set to 0.001.
+
+During training, noise is added to every action. I reduced the noise by setting Ornstein-Uhlenbeck noise parameters sima and theta. I decreased sigma to 0.05 to reduce the influence of the random number on the result. Larger values prevent the agent from learning. I increased theta slightly to 0.25 to reduce the decrease the reversion speed of the noise function.
+
+A well-chosen learning rate as great influence on the learning progress of the agents. After some tuning I decided to set the learning rate for both actor and critic to 0.0006.
+
+## Model Architecture
+The primary actor network and the target actor network have identical architectures. The same is true for the primary critic network and the target critic network.
+
+### Actor
+```
+Actor(
+  (fc1): Linear(in_features=33, out_features=128, bias=True)
+  (fc2): Linear(in_features=128, out_features=256, bias=True)
+  (fc3): Linear(in_features=256, out_features=4, bias=True)
+  (bn1): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (bn2): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+```
+```
+def forward(self, state):
+    x = self.bn1(F.relu(self.fc1(state)))
+    x = self.bn2(F.relu(self.fc2(x)))
+    x = F.tanh(self.fc3(x))
+    return x
+```
+
+### Critic
+```
+Critic(
+  (fcs1): Linear(in_features=33, out_features=512, bias=True)
+  (fc2): Linear(in_features=516, out_features=256, bias=True)
+  (fc3): Linear(in_features=256, out_features=1, bias=True)
+)
+```
+```
+def forward(self, state, action):
+    xs = F.relu(self.fcs1(state))
+    x = torch.cat((xs, action), dim=1)
+    x = F.relu(self.fc2(x))
+    x = self.fc3(x)
+    return x
+```
+
+## Result
+The agent achieves an average score of 13 in less than 300 episodes.
+The agents achieve an average score of 30 (over 100 consecutive episodes, and over all agents) in less than 70 episodes.
+
+<img src="images/result.png" width="80%" alt="" title="MC Control" />
+
+## Ideas for Improvement
+* find better hyperparameters in an automated way
+* study [Benchmarking Deep Reinforcement Learning for Continuous Control](https://arxiv.org/pdf/1604.06778.pdf) and implement Trust Region Policy Optimization (TRPO) and Truncated Natural Policy Gradient (TNPG)
+* implement Distributed Distributional Deterministic Policy Gradients (D4PG) and compare with DDPG
