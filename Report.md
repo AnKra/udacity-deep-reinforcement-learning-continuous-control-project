@@ -121,7 +121,7 @@ Each agent inserts its experience into a replay buffer. The buffer is shared by 
 
 The actor and critic networks are updated 10 times in a row after every 20 timesteps to make the agent stable. When training the critic network I use gradient clipping. The update is performed by soft update with tau set to 0.001.
 
-During training, noise is added to every action. I reduced the noise by setting Ornstein-Uhlenbeck noise parameters sima and theta. I decreased sigma to 0.05 to reduce the influence of the random number on the result. Larger values prevent the agent from learning. I increased theta slightly to 0.25 to reduce the decrease the reversion speed of the noise function.
+During training, noise is added to every action. I reduced the noise by setting Ornstein-Uhlenbeck noise parameters sigma and theta. I decreased sigma to 0.05 to reduce the influence of the random number on the result. Larger values prevent the agent from learning. I increased theta slightly to 0.25 to reduce the decrease the reversion speed of the noise function.
 
 A well-chosen learning rate as great influence on the learning progress of the agents. After some tuning I decided to set the learning rate for both actor and critic to 0.0006.
 

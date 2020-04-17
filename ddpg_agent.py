@@ -14,7 +14,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class Agent():
     """Interacts with and learns from the environment."""
 
-    def __init__(self, state_size, action_size, seed, batch_size, buffer_size=int(1e6), 
+    def __init__(self, state_size, action_size, seed, batch_size, buffer_size=int(1e6),
                  gamma=0.99, tau=1e-3, lr_actor=6e-4, lr_critic=6e-4, weight_decay=0,
                  update_every=20, n_update_networks=10):
         """Initialize an Agent object.
@@ -24,17 +24,20 @@ class Agent():
             state_size (int): dimension of each state
             action_size (int): dimension of each action
             seed (int): random seed
-            buffer_size (int): replay buffer size
             batch_size (int): minibatch size
+            buffer_size (int): replay buffer size
             gamma (float): discount factor
             tau (float): for soft update of target parameters
             lr_actor (float): learning rate of the actor
             lr_critic (float): learning rate of the critic
             weight_decay (float): L2 weight decay
+            update_every (int): after how many timesteps to update the network
+            n_update_networks (int): how often to update the network in a row
         """
+        random.seed(seed)
+
         self.state_size = state_size
         self.action_size = action_size
-        self.seed = random.seed(seed)
         self.batch_size = batch_size
         self.gamma = gamma
         self.tau = tau
@@ -144,10 +147,10 @@ class OUNoise:
 
     def __init__(self, size, seed, mu=0., theta=0.25, sigma=0.05):
         """Initialize parameters and noise process."""
+        random.seed(seed)
         self.mu = mu * np.ones(size)
         self.theta = theta
         self.sigma = sigma
-        self.seed = random.seed(seed)
         self.reset()
 
     def reset(self):
@@ -157,7 +160,7 @@ class OUNoise:
     def sample(self):
         """Update internal state and return it as a noise sample."""
         x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for i in range(len(x))])
+        dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
         self.state = x + dx
         return self.state
 
@@ -171,15 +174,14 @@ class ReplayBuffer:
             buffer_size (int): maximum size of buffer
             batch_size (int): size of each training batch
         """
+        random.seed(seed)
         self.action_size = action_size
         self.memory = deque(maxlen=buffer_size)  # internal memory (deque)
         self.batch_size = batch_size
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
-        self.seed = random.seed(seed)
 
     def add(self, states, actions, rewards, next_states, dones):
         """Add a new experience to memory."""
-        #for state, action, reward, next_state, done in zip(states, actions, rewards, next_states, dones):
         e = self.experience(states, actions, rewards, next_states, dones)
         self.memory.append(e)
 
